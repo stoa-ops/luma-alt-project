@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Luma Alt
 
-## Getting Started
+An internal event-management application built with Next.js, Drizzle, and
+Postgres. The current foundation supports allowlisted magic-link sign-in,
+event management, public event pages, free RSVP, and attendee lists.
 
-First, run the development server:
+## Local Development
+
+1. Install dependencies with `npm install`.
+2. Copy `.env.example` to `.env` and set `AUTH_SECRET`.
+3. Use `DATABASE_URL=pglite` for an ephemeral database that resets when the
+   development server restarts.
+4. Run `npm run dev` and open `http://localhost:3000`.
+5. Sign in as an address in `ADMIN_EMAIL_ALLOWLIST`. In development, the
+   one-time link is displayed on the login page and printed by the server.
+
+When `ADMIN_EMAIL_ALLOWLIST` is omitted in development, only
+`admin@example.com` is allowed.
+
+## Database
+
+The development PGlite database applies checked-in migrations when the app
+starts. Production uses persistent Postgres and never runs migrations from the
+application process.
+
+Generate a migration after changing `src/lib/db/schema.ts`:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run db:generate
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Apply migrations to persistent Postgres with an explicit shell environment:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+DATABASE_URL='postgres://...' npm run db:migrate
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The migration command intentionally rejects an unset URL or `pglite` because
+that would migrate a disposable database.
 
-## Learn More
+## Verification
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run typecheck
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+There is not yet an automated test suite or lint configuration.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Production Configuration
 
-## Deploy on Vercel
+Production currently requires:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `DATABASE_URL`: persistent Postgres connection string
+- `AUTH_SECRET`: random session-signing secret
+- `ADMIN_EMAIL_ALLOWLIST`: comma-separated administrator addresses
+- `APP_URL`: public HTTPS origin
+- `RESEND_API_KEY`: Resend API key
+- `AUTH_EMAIL_FROM`: verified sender address
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The planned production target is Vercel with Supabase Postgres and Storage.
